@@ -203,6 +203,7 @@
   .card small{font-weight:400;font-size:11.5px;color:var(--muted);line-height:1.3}
   .card.sel{border-color:var(--accent);background:rgba(255,106,43,.09)}
   .card.sel small{color:var(--accent2)}
+  .cards .grp{grid-column:1/-1;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:6px 2px -2px}
   #engInfo{margin-top:10px}
 
   /* ---- bottom navigation */
@@ -537,7 +538,7 @@
         <dl>
           <dt>Drive screen</dt><dd>Big rev dial with the engine you hear, ‹ › to change engine, <b>🔧 Tuning</b> (one tap to the mods of this engine, the current ones written under it) and <b>⇄ A/B</b> (back to the engine you heard before). Below: throttle and boost bars, the car's live values, Start sound, volume, Pops, Inside/Outside, Record and My sounds.</dd>
           <dt>First drive card</dt><dd>On the Drive screen until you have connected the car and ticked the car test checklist: pair the radio, test the sound, connect, pick an engine, then the checklist. <b>Hide</b> puts it away.</dd>
-          <dt>Engines</dt><dd>26 engines on the Petrol and Diesel tabs (Sound tab). Star (☆) your favourites: ‹ › and the steering-wheel buttons then cycle through those only.</dd>
+          <dt>Engines</dt><dd>38 engines on the Petrol and Diesel tabs (Sound tab), with the BMW engines (M50 to S58, B48 and the M57, N57 and B57 diesels) in their own group. Star (☆) your favourites: ‹ › and the steering-wheel buttons then cycle through those only.</dd>
           <dt>Tuning</dt><dd>Per engine, saved for each: <b>Exhaust</b> stock, sport or straight pipe. <b>Turbo</b> on every engine: a factory turbo engine gets Small · quick (spools early, higher whistle), Stock or Big · laggy (later, louder, more whoosh and flutter); a naturally aspirated engine gets None (as built), <b>Turbo kit</b> (a turbo sized for that engine: whistle, whoosh and blow-off) or <b>Big turbo</b> (comes in later and louder). The line under it says at what rpm it reaches full boost. Boost on the Drive screen and the HUD follows the swapped engine's turbo. <b>Hot cam</b> (petrol): lumpy idle. <b>Anti-lag</b> (petrol with a turbo or kit): bangs on lift-off, turbo kept spooled. Reset brings back the engine as modelled.</dd>
           <dt>Tone</dt><dd><b>Bass</b>: more or less deep low end. <b>Aggression</b>: from smooth to raw and raspy. <b>Turbo loudness</b>: how loud the whistle, whoosh and flutter are. <b>Louder with speed</b>: turns the engine up as you go faster (the most at 130 km/h), so road noise doesn't drown it. <b>Starter crank</b> when the engine starts.</dd>
           <dt>Listening position</dt><dd><b>Outside</b> = the raw exhaust. <b>Inside</b> = muffled, as heard from the driver's seat, and at some rpm the cabin booms the way a real car's body does.</dd>
@@ -738,7 +739,8 @@ class Engine extends AudioWorkletProcessor{
       const d=e.data;
       if(d.type==='profile'){ if(this.p && this.env>0.01) this.pendingP=d.profile; else this.setProfile(d.profile); }   // running: fade out, swap, fade in
       else if(d.type==='shift'){ this.shiftT=0.28; this.shU=SH_U; this.shArm=1.2; this.shSeen=false; this.shB=0.35; const P=this.p;
-        if(P&&P.turbo && (P.diesel||P.antilag||this.boost<=0.4)) this.startFlutter(0.4+0.6*this.boost); }   // a blow-off valve vents the boost: no surge flutter then (it vents in the turbo block)
+        if(P&&P.turbo && (P.diesel||P.antilag||this.boost<=0.4)) this.startFlutter(0.4+0.6*this.boost);
+        else if(P&&P.turbo&&P.flutter) this.startFlutter((0.4+0.6*this.boost)*P.flutter); }   // p.flutter: chatters as well as venting (N54)   // a blow-off valve vents the boost: no surge flutter then (it vents in the turbo block)
       else if(d.type==='noCrank') this.noCrank=!!d.value;
       else if(d.type==='revMatch') this.revMatch=!!d.value;
       else if(d.type==='cabin') this.cabin=!!d.value;
@@ -1024,7 +1026,7 @@ class Engine extends AudioWorkletProcessor{
         if(!diesel&&!p.antilag&&(this.load<0.15||this.shB>0)&&this.boost>0.4&&this.bov<0.01){ this.shB=0;   // lift, or a spotted gear change (don't wait for the lagging load)
         this.bov=this.boost; this.boost*=0.25;}
       }
-      if(this.bov>0.002){ c+=this.bovF.run(this.rndT())*this.bov*p.turbo*turboVol*0.45; this.bov*=0.99986; }
+      if(this.bov>0.002){ c+=this.bovF.run(this.rndT())*this.bov*p.turbo*turboVol*0.45*(p.bov||1); this.bov*=0.99986; }
       // compressor surge flutter on a gear change ("stu-tu-tu"), ~22 Hz chopping
       if(this.flut>0.002){ this.flPh+=this.flHz*(0.6+0.4*this.flut/this.flut0)*dt;
         if(this.flPh>1){ this.flPh-=1; this.flDuty=0.35+0.2*Math.random(); this.flAmp=0.7+0.45*Math.random(); }
@@ -1133,7 +1135,7 @@ const PROFILES = {
          r1:-0.65, damp1:0.65, r2:-0.5, damp2:0.4, muff:3200, orders:[[2,1],[4,0.7],[6,0.5],[8,0.35]],
          orderGain:0.25, intakeHz:800, intake:0.3, noise:0.36, jitter:0.08, lope:0.3, drive:1.6, pops:1.5, turbo:0.724, spool:3500, width:0,
          straightCap:{muff:4300, noise:0.18}},   // straight pipe: its very short pulses' noise clicked at idle through a 4960 Hz muffler
-  s54:  {fuel:'petrol', name:'BMW S54 3.2 inline-6 (E46 M3)',
+  s54:  {fuel:'petrol', group:'BMW', name:'BMW S54 3.2 inline-6 (E46 M3)',
          info:'Inline-6, individual throttle bodies · firing 1-5-3-6-2-4 · idle 900 · redline 8000 · split 3-into-1 headers',
          banks:'LRLRLR', idle:900, redline:8000, rasp:0.593, pulseMs:0.6, primary:[0.55,0.58], tail:[2.2,2.25],
          r1:-0.55, damp1:0.6, r2:-0.42, damp2:0.4, muff:2600, orders:[[1.5,0.15],[3,1],[4.5,0.15],[6,0.55],[9,0.25],[12,0.1]],
@@ -1163,7 +1165,7 @@ const PROFILES = {
          banks:'RLRLLRLRRL', idle:1000, redline:9000, rasp:0.431, pulseMs:0.45, primary:[0.42,0.43], tail:[1.4,1.45],
          r1:-0.62, damp1:0.62, r2:-0.4, damp2:0.42, muff:3400, orders:[[2.5,0.15],[5,1],[7.5,0.2],[10,0.6],[15,0.25]],
          orderGain:0.3, intakeHz:760, intake:0.45, noise:0.3, jitter:0.03, lope:0, drive:1.4, pops:0.8, turbo:0, width:0.35},
-  s65:  {fuel:'petrol', name:'BMW S65 4.0 V8 (E92 M3)',
+  s65:  {fuel:'petrol', group:'BMW', name:'BMW S65 4.0 V8 (E92 M3)',
          info:'V8 cross-plane, individual throttle bodies · firing 1-5-4-8-6-3-7-2 · idle 700 · redline 8400',
          banks:'RLRLLRLR', idle:700, redline:8400, rasp:0.445, pulseMs:0.65, primary:[0.56,0.6], tail:[2.1,2.2],
          r1:-0.58, damp1:0.6, r2:-0.42, damp2:0.4, muff:2300, orders:[[2,0.3],[4,1],[6,0.2],[8,0.55],[12,0.15]],
@@ -1179,8 +1181,66 @@ const PROFILES = {
          r1:-0.5, damp1:0.5, r2:-0.4, damp2:0.35, muff:700, orders:[[0.5,0.6],[1,1],[1.5,0.4],[2,0.5],[3,0.2]],
          orderGain:0.25, intakeHz:300, intake:0.18, noise:0.22, jitter:0.12, lope:0.4, drive:1.2, pops:0.9, turbo:0, width:0},
 
+  /* BMW inline-6s (and the B48 four): all sixes fire 1-5-3-6-2-4 */
+  m50:  {fuel:'petrol', group:'BMW', name:'BMW M50B25 2.5 inline-6 (E36 325i)',
+         info:'Inline-6, 24-valve DOHC · firing 1-5-3-6-2-4 · idle 700 · redline 6500 · naturally aspirated, silky, intake howl',
+         banks:'LRLRLR', idle:700, redline:6500, rasp:0.514, pulseMs:0.7, primary:[0.6,0.63], tail:[2.4,2.45],
+         r1:-0.55, damp1:0.58, r2:-0.43, damp2:0.38, muff:1900, orders:[[1.5,0.1],[3,1],[4.5,0.12],[6,0.6],[9,0.22],[12,0.08]],
+         orderGain:0.3, intakeHz:620, intake:0.5, noise:0.24, jitter:0.03, lope:0, drive:1.3, pops:0.5, turbo:0, width:0.15},
+  m52:  {fuel:'petrol', group:'BMW', name:'BMW M52B28 2.8 inline-6 (E36 328i / E39 528i)',
+         info:'Inline-6, aluminium block, VANOS · firing 1-5-3-6-2-4 · idle 700 · redline 6500 · naturally aspirated, deeper and torquier than the M50',
+         banks:'LRLRLR', idle:700, redline:6500, rasp:0.488, pulseMs:0.77, primary:[0.63,0.66], tail:[2.5,2.55],
+         r1:-0.55, damp1:0.56, r2:-0.44, damp2:0.37, muff:1700, orders:[[1.5,0.16],[3,1],[4.5,0.15],[6,0.5],[9,0.18],[12,0.06]],
+         orderGain:0.3, intakeHz:560, intake:0.42, noise:0.24, jitter:0.03, lope:0, drive:1.32, pops:0.5, turbo:0, width:0.15},
+  m54:  {fuel:'petrol', group:'BMW', name:'BMW M54B30 3.0 inline-6 (E46 330i)',
+         info:'Inline-6, double VANOS, two-stage intake · firing 1-5-3-6-2-4 · idle 700 · redline 6500 · naturally aspirated, refined, raspy at the top',
+         banks:'LRLRLR', idle:700, redline:6500, rasp:0.592, raspHz:2100, pulseMs:0.74, primary:[0.62,0.65], tail:[2.45,2.5],
+         r1:-0.55, damp1:0.58, r2:-0.43, damp2:0.38, muff:2100, orders:[[1.5,0.12],[3,1],[4.5,0.14],[6,0.55],[9,0.26],[12,0.1]],
+         orderGain:0.3, intakeHz:580, intake:0.4, noise:0.3, jitter:0.03, lope:0, drive:1.36, pops:0.6, turbo:0, width:0.15},
+  n52:  {fuel:'petrol', group:'BMW', name:'BMW N52B30 3.0 inline-6 (E90 330i)',
+         info:'Inline-6, magnesium block, Valvetronic · firing 1-5-3-6-2-4 · idle 700 · redline 7000 · naturally aspirated, metallic scream above 5000',
+         banks:'LRLRLR', idle:700, redline:7000, rasp:0.659, raspHz:2500, pulseMs:0.66, primary:[0.58,0.6], tail:[2.3,2.35],
+         r1:-0.56, damp1:0.6, r2:-0.42, damp2:0.4, muff:2400, orders:[[1.5,0.1],[3,1],[4.5,0.16],[6,0.62],[9,0.32],[12,0.15]],
+         orderGain:0.3, intakeHz:680, intake:0.45, noise:0.32, jitter:0.03, lope:0, drive:1.4, pops:0.6, turbo:0, width:0.15},
+  n54:  {fuel:'petrol', group:'BMW', name:'BMW N54B30 3.0 I6 twin-turbo (E92 335i)',
+         info:'Inline-6, two small turbos (front / rear three) · firing 1-5-3-6-2-4 · idle 700 · redline 7000 · quick spool, big whoosh, blow-off and flutter',
+         banks:'LRLRLR', idle:700, redline:7000, rasp:0.595, pulseMs:0.72, primary:[0.5,0.52], tail:[2.4,2.45],
+         r1:-0.52, damp1:0.56, r2:-0.45, damp2:0.36, muff:1600, orders:[[1.5,0.12],[3,1],[4.5,0.12],[6,0.45],[9,0.18]],
+         orderGain:0.3, intakeHz:480, intake:0.22, noise:0.26, jitter:0.03, lope:0, drive:1.3, pops:0.9, turbo:2.088, spool:2000, whistle:0.024, whistleHz:3700,
+         bov:1.5, flutter:0.6, width:0.15},
+  n55:  {fuel:'petrol', group:'BMW', name:'BMW N55B30 3.0 I6 turbo (F30 335i / M135i)',
+         info:'Inline-6, one twin-scroll turbo, Valvetronic · firing 1-5-3-6-2-4 · idle 700 · redline 7000 · smoother, quieter turbo than the N54',
+         banks:'AAAAAA', idle:700, redline:7000, rasp:0.585, pulseMs:0.74, primary:[0.55], tail:[2.45],
+         r1:-0.52, damp1:0.56, r2:-0.45, damp2:0.36, muff:1500, orders:[[1.5,0.08],[3,1],[4.5,0.1],[6,0.4],[9,0.12]],
+         orderGain:0.3, intakeHz:460, intake:0.2, noise:0.22, jitter:0.025, lope:0, drive:1.25, pops:0.8, turbo:1.803, spool:2300, whistle:0.014, whistleHz:3000,
+         bov:0.7, width:0.1},
+  b58:  {fuel:'petrol', group:'BMW', name:'BMW B58B30 3.0 I6 turbo (G20 M340i / A90 Supra)',
+         info:'Inline-6, one twin-scroll turbo, closed deck · firing 1-5-3-6-2-4 · idle 650 · redline 7000 · deeper than the N55, crackles in Sport',
+         banks:'AAAAAA', idle:650, redline:7000, rasp:0.669, pulseMs:0.8, primary:[0.58], tail:[2.7],
+         r1:-0.54, damp1:0.54, r2:-0.47, damp2:0.35, muff:1350, orders:[[1.5,0.18],[3,1],[4.5,0.15],[6,0.42],[9,0.14]],
+         orderGain:0.3, intakeHz:420, intake:0.2, noise:0.24, jitter:0.03, lope:0, drive:1.3, pops:1.6, turbo:1.844, spool:2200, whistle:0.014, whistleHz:2900,
+         bov:0.8, width:0.2},
+  b48:  {fuel:'petrol', group:'BMW', name:'BMW B48B20 2.0 I4 turbo (G20 330i)',
+         info:'Inline-4, twin-scroll turbo, balance shafts · firing 1-3-4-2 · idle 700 · redline 6500 · smooth, deeper than most fours',
+         banks:'AAAA', idle:700, redline:6500, rasp:0.707, pulseMs:0.66, primary:[0.55], tail:[2.3],
+         r1:-0.55, damp1:0.55, r2:-0.46, damp2:0.36, muff:1700, orders:[[1,0.08],[2,1],[4,0.4],[6,0.15]],
+         orderGain:0.3, intakeHz:500, intake:0.24, noise:0.3, jitter:0.045, lope:0, drive:1.4, pops:0.9, turbo:1.27, spool:2200, whistle:0.016, whistleHz:3100,
+         bov:0.8, width:0},
+  s55:  {fuel:'petrol', group:'BMW', name:'BMW S55B30 3.0 I6 twin-turbo (F80 M3 / F82 M4)',
+         info:'Inline-6, two mono-scroll turbos, forged crank · firing 1-5-3-6-2-4 · idle 750 · redline 7600 · harsh, metallic, raspy, loud pops in Sport+',
+         banks:'LRLRLR', idle:750, redline:7600, rasp:0.871, raspHz:2700, pulseMs:0.6, primary:[0.48,0.5], tail:[2.1,2.15],
+         r1:-0.58, damp1:0.6, r2:-0.42, damp2:0.4, muff:2800, orders:[[1.5,0.12],[3,1],[4.5,0.2],[6,0.6],[9,0.35],[12,0.15]],
+         orderGain:0.3, intakeHz:600, intake:0.3, noise:0.4, jitter:0.04, lope:0, drive:1.5, pops:1.9, turbo:2.104, spool:2900, whistle:0.03, whistleHz:3500,
+         bov:1.25, width:0.2},
+  s58:  {fuel:'petrol', group:'BMW', name:'BMW S58B30 3.0 I6 twin-turbo (G80 M3 / G82 M4)',
+         info:'Inline-6, two mono-scroll turbos, closed deck · firing 1-5-3-6-2-4 · idle 750 · redline 7200 · deeper and fuller than the S55, strong pops',
+         banks:'LRLRLR', idle:750, redline:7200, rasp:0.691, raspHz:2100, pulseMs:0.66, primary:[0.52,0.54], tail:[2.3,2.35],
+         r1:-0.56, damp1:0.58, r2:-0.44, damp2:0.38, muff:2300, orders:[[1.5,0.18],[3,1],[4.5,0.18],[6,0.5],[9,0.22],[12,0.08]],
+         orderGain:0.3, intakeHz:520, intake:0.28, noise:0.32, jitter:0.035, lope:0, drive:1.4, pops:1.7, turbo:1.73, spool:2700, whistle:0.02, whistleHz:3200,
+         bov:1.0, width:0.25},
+
   /* ---------------- DIESEL ---------------- */
-  m57:  {fuel:'diesel', name:'BMW E46 330d M57 3.0 — straight pipe',
+  m57:  {fuel:'diesel', group:'BMW', name:'BMW E46 330d M57 3.0 — straight pipe',
          info:'M57D30 inline-6 common-rail turbodiesel · firing 1-5-3-6-2-4 · idle 780 · governor limit ≈ 4800 (soft, hunting) · big variable-geometry turbo · no cat / no mufflers',
          banks:'AAAAAA', idle:780, redline:4800, diesel:true, pulseMs:0.88, primary:[0.62], tail:[3.3],
          r1:-0.6, damp1:0.55, r2:-0.62, damp2:0.6, muff:5200, orders:[[1.5,0.32],[3,1],[4.5,0.3],[6,0.55],[9,0.22]],
@@ -1219,9 +1279,22 @@ const PROFILES = {
          r1:-0.5, damp1:0.55, r2:-0.45, damp2:0.38, muff:2000, orders:[[1,0.12],[2,1],[4,0.4],[6,0.15]],
          orderGain:0.3, intakeHz:400, intake:0.2, noise:0.28, jitter:0.04, lope:0, drive:1.4, pops:0.4,
          turbo:1.516, spool:1800, whistle:0.025, whistleHz:2800, knock:0.8, knockHz:2000, knockGain:6.42, width:0},
+
+  n57:  {fuel:'diesel', group:'BMW', name:'BMW N57 3.0 inline-6 diesel (F10 530d / 535d) — sport exhaust',
+         info:'N57D30 inline-6 common-rail turbodiesel · firing 1-5-3-6-2-4 · idle 700 · redline 5000 · variable-geometry turbo (535d: two-stage twin turbo)',
+         banks:'AAAAAA', idle:700, redline:5000, diesel:true, pulseMs:0.85, primary:[0.6], tail:[3.0],
+         r1:-0.55, damp1:0.55, r2:-0.5, damp2:0.45, muff:2400, orders:[[1.5,0.25],[3,1],[4.5,0.22],[6,0.45],[9,0.15]],
+         orderGain:0.28, intakeHz:380, intake:0.28, noise:0.34, jitter:0.04, lope:0, drive:1.6, pops:0.4,
+         rasp:0.741, raspHz:1800, turbo:2.303, spool:1500, whistle:0.06, whistleHz:3000, knock:0.9, knockHz:1800, knockGain:5.7, width:0},
+  b57:  {fuel:'diesel', group:'BMW', name:'BMW B57 3.0 inline-6 diesel (G30 530d / X5 40d) — sport exhaust',
+         info:'B57D30 inline-6 common-rail turbodiesel, 2500 bar injection · firing 1-5-3-6-2-4 · idle 700 · redline 5000 · variable-geometry turbo, smooth and refined',
+         banks:'AAAAAA', idle:700, redline:5000, diesel:true, pulseMs:0.88, primary:[0.62], tail:[3.1],
+         r1:-0.55, damp1:0.55, r2:-0.5, damp2:0.46, muff:2100, orders:[[1.5,0.2],[3,1],[4.5,0.18],[6,0.4],[9,0.1]],
+         orderGain:0.28, intakeHz:400, intake:0.24, noise:0.28, jitter:0.03, ccv:0.045, lope:0, drive:1.5, pops:0.35,
+         rasp:0.632, raspHz:1900, turbo:2.184, spool:1400, whistle:0.045, whistleHz:3200, knock:0.7, knockHz:2000, knockGain:6.3, width:0},
 };
 /* Loudness normalisation per profile (measured offline at 3000 rpm full load). */
-const NORM = {"v8x":0.278,"coyote":0.252,"v8f":0.267,"i6t":0.223,"f6":0.232,"v10":0.264,"v12":0.254,"i5":0.211,"i4t":0.238,"ej25":0.227,"rot":0.253,"s54":0.232,"f20c":0.242,"rb26":0.22,"m156":0.235,"aud42":0.254,"lfa":0.27,"s65":0.261,"evo":0.231,"vtwin":0.352,"m57":0.097,"cummins":0.157,"psd73":0.159,"hd1":0.165,"v10tdi":0.171,"tdi20":0.247};
+const NORM = {"v8x":0.278,"coyote":0.252,"v8f":0.267,"i6t":0.223,"f6":0.232,"v10":0.264,"v12":0.254,"i5":0.211,"i4t":0.238,"ej25":0.227,"rot":0.253,"s54":0.232,"f20c":0.242,"rb26":0.22,"m156":0.235,"aud42":0.254,"lfa":0.27,"s65":0.261,"evo":0.231,"vtwin":0.352,"m57":0.097,"cummins":0.157,"psd73":0.159,"hd1":0.165,"v10tdi":0.171,"tdi20":0.247,"m50":0.232,"m52":0.213,"m54":0.218,"n52":0.219,"n54":0.22,"n55":0.211,"b58":0.187,"b48":0.267,"s55":0.202,"s58":0.221,"n57":0.139,"b57":0.142};
 function buildProfile(src){
   const p = {...src};
   const n = src.banks.length;
@@ -1307,10 +1380,10 @@ async function startAudio(){
       soft ceiling at -1 dBFS (true-peak headroom for the lossy Bluetooth codec; catches what the limiter's 6 ms look-ahead lets through). */
 /* Per-engine trim after the worklet (dB), so every engine plays as loud through the output chain as in round 69: the compressors
    treat a bass-heavy V8 and a screaming V10 differently. Measured with tools/chain_test.py --calib. */
-const CHAIN_TRIM = {"v8f":2.8,"i6t":0.2,"f6":1.8,"v10":2.9,"v12":3.7,"i5":-0.5,"ej25":-1.5,"rot":1.4,"s54":0.9,"f20c":0.8,"rb26":0.8,"m156":-0.7,"aud42":1.8,"lfa":3.1,"s65":2.1,"evo":-0.5,"vtwin":0.4,"m57":0.5,"cummins":0.4,"tdi20":-0.5,"v8x":-1.0,"coyote":-0.2,"i4t":-0.3,"hd1":-0.5};
+const CHAIN_TRIM = {"v8f":2.8,"i6t":0.2,"f6":1.8,"v10":2.9,"v12":3.7,"i5":-0.5,"ej25":-1.5,"rot":1.4,"s54":0.9,"f20c":0.8,"rb26":0.8,"m156":-0.7,"aud42":1.8,"lfa":3.1,"s65":2.1,"evo":-0.5,"vtwin":0.4,"m57":0.5,"cummins":0.4,"tdi20":-0.5,"v8x":-1.0,"coyote":-0.2,"i4t":-0.3,"hd1":-0.5,"m50":-0.3,"m52":-0.7,"m54":-0.6,"n52":0.3,"n54":0.2,"b58":0.1,"b48":-0.3,"s55":1.4,"s58":0.6,"n57":0.2};
 // Inside view: small extra trim per engine so the Inside level matches round 69 through the chain (the body-transmission model of round 70
 // took a little more from some engines). Measured with chain_test --inside --only all.
-const INSIDE_TRIM = {"v8x":0.5,"coyote":0.5,"v8f":1.1,"i6t":0.2,"f6":0.5,"v10":1.0,"v12":0.8,"i5":0.2,"rot":0.9,"s54":0.2,"f20c":0.5,"rb26":0.2,"m156":0.5,"aud42":0.4,"lfa":1.1,"s65":0.8,"vtwin":0.2,"m57":-0.2,"hd1":-0.5,"v10tdi":-0.2,"tdi20":1.8};
+const INSIDE_TRIM = {"v8x":0.5,"coyote":0.5,"v8f":1.1,"i6t":0.2,"f6":0.5,"v10":1.0,"v12":0.8,"i5":0.2,"rot":0.9,"s54":0.2,"f20c":0.5,"rb26":0.2,"m156":0.5,"aud42":0.4,"lfa":1.1,"s65":0.8,"vtwin":0.2,"m57":-0.2,"hd1":-0.5,"v10tdi":-0.2,"tdi20":1.8,"m50":-0.5,"m52":-0.2,"m54":-0.3,"n52":-0.3,"b48":-1.3,"n57":1.2,"b57":1.1};
 function chainTrim(k, inside){ return Math.pow(10, ((CHAIN_TRIM[k]||0)+(inside?(INSIDE_TRIM[k]||0):0))/20); }
 function makeChain(c, o={}){
   const v=(k,d)=>o[k]!=null?o[k]:d;
@@ -2384,9 +2457,13 @@ $('demoStop').onclick=()=>stopDemo();
    ===================================================================== */
 /* Petrol / Diesel tabs: each tab lists only its engines and remembers its own last choice. */
 let fuel = store.get('fuel','petrol')==='diesel' ? 'diesel' : 'petrol';
+/* Engine order on each tab: the other makes as listed, then the BMW group (NA sixes, M NA, turbo sixes, M turbo, the four; diesels by age). */
+const BMW_ORDER=['m50','m52','m54','n52','s54','s65','n54','n55','b58','s55','s58','b48','m57','n57','b57'];
+function engineKeys(f){ const ks=Object.keys(PROFILES).filter(k=>PROFILES[k].fuel===f), rank=k=>PROFILES[k].group==='BMW' ? 1000+BMW_ORDER.indexOf(k) : ks.indexOf(k);
+  return ks.sort((a,b)=>rank(a)-rank(b)); }
 function fillEngines(){
   const sel=$('profile'); sel.innerHTML='';
-  for(const [k,p] of Object.entries(PROFILES)) if(p.fuel===fuel){ const o=document.createElement('option'); o.value=k; o.textContent=p.name; sel.appendChild(o); }
+  for(const k of engineKeys(fuel)){ const o=document.createElement('option'); o.value=k; o.textContent=PROFILES[k].name; sel.appendChild(o); }
   const last=store.get('profile_'+fuel, fuel==='diesel'?'m57':'v8x');
   sel.value = PROFILES[last]&&PROFILES[last].fuel===fuel ? last : sel.options[0].value;
   $('tabPetrol').classList.toggle('sel', fuel==='petrol'); $('tabDiesel').classList.toggle('sel', fuel==='diesel'); $('tabPetrol').setAttribute('aria-selected', fuel==='petrol'); $('tabDiesel').setAttribute('aria-selected', fuel==='diesel');
@@ -2396,9 +2473,10 @@ function fillEngines(){
 /* Engine cards (the hidden <select> stays the single source of truth). */
 var presetsReady=false;
 function renderCards(){
-  const box=$('engCards'), sel=$('profile'); box.innerHTML='';
+  const box=$('engCards'), sel=$('profile'); box.innerHTML=''; let grp=null;
   for(const o of sel.options){
-    const P=PROFILES[o.value], b=document.createElement('button');
+    const P=PROFILES[o.value], b=document.createElement('button'), g=P.group||'';
+    if(g!==grp){ grp=g; const h=document.createElement('div'); h.className='grp'; h.textContent=g||'Other makes'; box.appendChild(h); }
     b.className='card'+(o.value===sel.value?' sel':''); b.setAttribute('aria-pressed', o.value===sel.value);
     const t=document.createElement('span'); t.textContent=P.name.split(' — ')[0];
     const s=document.createElement('small'); s.textContent=P.info.split(' · ').slice(0,2).join(' · ');
@@ -2433,7 +2511,7 @@ $('aggr').oninput=()=>{ store.set('aggr',$('aggr').value); showVals(); applyTone
 showVals();
 /* A/B compare: one tap flips between the current engine and the one heard before it (also across petrol/diesel). */
 const SHORT={v8x:'LS3',coyote:'Coyote',v8f:'458',i6t:'2JZ',f6:'GT3',v10:'V10',v12:'V12',i5:'RS3',i4t:'Golf R',ej25:'STI',rot:'13B',
-  s54:'S54',f20c:'F20C',rb26:'RB26',m156:'M156',aud42:'RS4 4.2',lfa:'LFA',s65:'S65',evo:'4G63',v10tdi:'V10 TDI',vtwin:'Harley',m57:'M57',cummins:'Cummins',psd73:'7.3 PSD',hd1:'1HD',tdi20:'GTD'};
+  s54:'S54',f20c:'F20C',rb26:'RB26',m156:'M156',aud42:'RS4 4.2',lfa:'LFA',s65:'S65',evo:'4G63',v10tdi:'V10 TDI',vtwin:'Harley',m57:'M57',m50:'M50',m52:'M52',m54:'M54',n52:'N52',n54:'N54',n55:'N55',b58:'B58',b48:'B48',s55:'S55',s58:'S58',n57:'N57',b57:'B57',cummins:'Cummins',psd73:'7.3 PSD',hd1:'1HD',tdi20:'GTD'};
 let curKey=null;
 function showAB(){ const o=store.get('abOther',''), ok=!!PROFILES[o] && o!==$('profile').value;
   $('abBtn').classList.toggle('hidden',!ok);
@@ -2713,7 +2791,7 @@ window.addEventListener('popstate',()=>{
 function setDim(on){ $('dim').classList.toggle('hidden',!on); on ? pushOverlay() : popOverlay(); }
 $('dimBtn').onclick=()=>setDim(true);
 $('hudBtn').onclick=()=>setHud(true);
-const APP_VERSION='81';
+const APP_VERSION='82';
 $('hudExit').onclick=()=>setHud(false);
 $('hudAB').onclick=()=>$('abBtn').onclick();
 $('hudPersp').onclick=()=>$('perToggle').onclick();

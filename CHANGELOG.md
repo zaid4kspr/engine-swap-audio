@@ -2,9 +2,9 @@
 
 Everything since round 5 is **untested in the car**. The First drive card and the car test checklist walk through it.
 
-## What the app does now (round 81)
+## What the app does now (round 82)
 
-Engine Swap plays one of 26 engines through the car speakers, driven live by the Golf's OBD data (Ancel BD500 with its learned profile, or any ELM327). Everything since round 5 is **untested in the car**; the BD500 and ELM327 conversation is byte-for-byte the round-5 one (checked against simulated adapters), and your round-5 settings carry over.
+Engine Swap plays one of 38 engines through the car speakers, driven live by the Golf's OBD data (Ancel BD500 with its learned profile, or any ELM327). Everything since round 5 is **untested in the car**; the BD500 and ELM327 conversation is byte-for-byte the round-5 one (checked against simulated adapters), and your round-5 settings carry over.
 
 - **Drive:** big rev dial, the engine with ‹ ›, **🔧 Tuning** (one tap, shows the current mods) and **⇄ A/B**, throttle and boost bars, live car values, Start sound, volume, Pops, Inside/Outside, Record, My sounds. A **First drive** card (pair, test sound, connect, pick an engine, car test checklist) until the first drive is done. **HUD** and **🌙 Dim** in the header.
 - **Sound:** Petrol / Diesel engines with ☆ favourites; **Tuning** per engine: exhaust, **turbo on every engine** (size on factory turbo engines, a *Turbo kit* or *Big turbo* on naturally aspirated ones), hot cam, anti-lag; shift light, blips and launch (folded); tone. Rev range and Match a real recording under **Advanced**.
@@ -12,6 +12,19 @@ Engine Swap plays one of 26 engines through the car speakers, driven live by the
 - **More:** Help, **🛟 Safe mode** (every extra off in one tap, turbo kit included), **Copy report for Claude**, settings export / import, *Advanced: connection log & adapter settings* (BD500 capture).
 
 **Test first in the car** (parked unless noted): the First drive card on the Drive screen → **▶ Test** sound, **Connect**, drive gently 5 minutes without touching the phone (anything odd: Safe mode), then the checklist and **Copy report**. Then try a **Turbo kit** on a V8 or the V10.
+
+**Round 82: 12 new BMW engines (38 in all)**
+- **Petrol:** M50 (E36 325i), M52 (E36 328i / E39 528i), M54 (E46 330i), N52 (E90 330i), N54 twin-turbo (E92 335i), N55 (F30 335i / M135i), B58 (G20 M340i / A90 Supra), B48 four (G20 330i), S55 twin-turbo (F80 M3 / F82 M4), S58 twin-turbo (G80 M3 / G82 M4). **Diesel:** N57 (F10 530d / 535d) and B57 (G30 530d / X5 40d), both with a sport exhaust as built (the M57 stays the straight-piped one). Every six fires 1-5-3-6-2-4, the B48 1-3-4-2; each card's info line gives firing order, idle, redline and induction.
+- **Grouped:** on both tabs the BMW engines now sit together under a **BMW** header after the other makes (the S54, S65 and M57 moved into it): NA sixes, M NA engines, turbo sixes, M turbo sixes, the B48; diesels M57, N57, B57. ‹ › follows the same order. Favourites and saved settings are unchanged.
+- **How they differ, in the direction the real engines do** (shares of the full-throttle pull; band balance through the output chain, relative to the whole):
+  - NA sixes, rasp: M50 −23.0, M52 −23.5, M54 −21.5, N52 −20.5 dB (S54 −21.2). Low end (40-120 Hz): M52 −18.3, M54 −18.5, M50 −19.1, N52 −23.3 dB. Top (2-5 kHz): M52 −26.6, M50 −25.2, M54 −24.2, N52 −21.8 dB. So M52 the deepest and darkest, M50 with the most intake howl, M54 raspier on top, N52 the brightest and most metallic.
+  - Turbo sixes, turbo share: N54 −11.5, S55 −11.0, S58 −12.5, N55 −13.5, B58 −14.0 dB (2JZ −13.0). Spool (10/50/90 % boost on a pull): N54 earliest (two small turbos), then B58, N55, S58, S55. The N54 also has a louder blow-off (×1.5) and keeps some flutter on a shift (−14.5 dB vs the pull); N55 and B58 have soft recirculating valves.
+  - B58 vs N55: 4 dB more low end (−20.0 vs −24.2 dB), pops on lift-off ×2. S55 vs S58: rasp −18.5 vs −20.0 dB, 2-5 kHz −14.3 vs −16.5 dB, low end −24.7 vs −22.2 dB, pops 1.9 vs 1.7.
+  - B48 vs the Golf R: less rasp (−21.0 vs −19.9 dB), 1.1 dB less at 2-5 kHz and 1.6 dB less at 1-2 kHz.
+  - Diesels, clatter vs engine at idle: M57 −3.9, N57 −5.5, B57 −9.0 dB; turbo share M57 −9.7, N57 −12.0, B57 −13.0 dB; the B57 also burns more evenly (cycle-to-cycle variation 0.045 instead of 0.06).
+- **Calibrated like the others:** pull loudness −13.4 dB (bench), output chain at the median of the older engines of the same fuel (petrol −11.2, diesel −10.6 dB rms, `CHAIN_TRIM`), Inside the same (`INSIDE_TRIM`, petrol −8.6, diesel −7.55 dB), all within 0.15 dB. True peak −1.37..−2.14 dBTP. Turbo kit on the four new NA engines: pull within 0.1 dB of as built.
+- Two optional profile fields in the sound engine: `bov` (blow-off level, default 1) and `flutter` (flutter alongside the blow-off, default none). The 26 older engines render bit-identical: their story renders still hash `9dedd18b`; the 12 new ones hash `d5ea0c1b` (the suite checks both). 0 clicks stock, straight pipe, turbo kit / big turbo and anti-lag.
+- Demos: `sound-demos/bmw-round82/` (story renders of the 12, plus the S54, 2JZ, Golf R and M57 to compare). Version 82.
 
 **Round 81: Demo mode shifts like an automatic, and a blow-off valve vents without fluttering**
 - **Demo mode at full throttle (your report: "like it does lag a bit").** Measured with a new test that drives the page's own demo, car-data and shift code into the sound engine (`tools/demo_test.mjs`, 20 s full-throttle pull, now in the suite):
