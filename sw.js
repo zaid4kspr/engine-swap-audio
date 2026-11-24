@@ -1,7 +1,7 @@
 // Offline support: the app works in the car without mobile data.
 // Network-first (so updates arrive when online), cache fallback when offline. Both bypass the browser's HTTP cache
 // (GitHub Pages says max-age=600): without that, a launch right after an update got the old page and cached it again.
-const CACHE = 'engine-swap-v80';
+const CACHE = 'engine-swap-v81';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, {cache: 'reload'})))).then(() => self.skipWaiting()));

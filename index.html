@@ -2791,7 +2791,7 @@ window.addEventListener('popstate',()=>{
 function setDim(on){ $('dim').classList.toggle('hidden',!on); on ? pushOverlay() : popOverlay(); }
 $('dimBtn').onclick=()=>setDim(true);
 $('hudBtn').onclick=()=>setHud(true);
-const APP_VERSION='82';
+const APP_VERSION='83';
 $('hudExit').onclick=()=>setHud(false);
 $('hudAB').onclick=()=>$('abBtn').onclick();
 $('hudPersp').onclick=()=>$('perToggle').onclick();
@@ -2811,7 +2811,10 @@ if('serviceWorker' in navigator){
 $('updReload').onclick=()=>location.reload();
 $('copyLog').onclick = async()=>{ try{ await navigator.clipboard.writeText($('log').textContent); log('Log copied — paste it in the chat.'); }catch{ log('Copy failed — take a screenshot instead.'); } };
 $('clearLog').onclick = ()=>{ $('log').textContent=''; };
-if(!('bluetooth' in navigator)){ $('bleBtn').disabled=true; $('srcHint').textContent='This browser has no Web Bluetooth (Samsung Internet and Firefox don\'t have it). Open this page in Chrome on Android. Demo mode still works.'; }
+if(!('bluetooth' in navigator)){ $('bleBtn').disabled=true;
+  if(/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1))   // every iOS browser (Safari, Chrome...) runs on WebKit, which has no Web Bluetooth
+    $('srcHint').innerHTML='iPhone and iPad browsers can\'t use Bluetooth (Apple blocks it in Safari and Chrome). Open this page in the free <a href="https://apps.apple.com/app/bluefy-web-ble-browser/id1492822055" target="_blank" rel="noopener">Bluefy</a> browser to connect a BLE adapter (BD500 or BLE ELM327). Demo mode still works here.';
+  else $('srcHint').textContent='This browser has no Web Bluetooth (Samsung Internet and Firefox don\'t have it). Open this page in Chrome on Android. Demo mode still works.'; }
 else if(navigator.bluetooth.getAvailability){ const SH=$('srcHint').innerHTML, bt=a=>{ if(!a) $('srcHint').textContent='Phone Bluetooth looks off: switch it on, then tap Connect OBD.'; else if(/looks off/.test($('srcHint').textContent)) $('srcHint').innerHTML=SH; };
   navigator.bluetooth.getAvailability().then(bt).catch(()=>{}); navigator.bluetooth.addEventListener('availabilitychanged', e=>bt(e.value)); }   // display only
 if('serial' in navigator){ $('sppBtn').classList.remove('hidden'); }

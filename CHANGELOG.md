@@ -2,7 +2,7 @@
 
 Everything since round 5 is **untested in the car**. The First drive card and the car test checklist walk through it.
 
-## What the app does now (round 82)
+## What the app does now (round 83)
 
 Engine Swap plays one of 38 engines through the car speakers, driven live by the Golf's OBD data (Ancel BD500 with its learned profile, or any ELM327). Everything since round 5 is **untested in the car**; the BD500 and ELM327 conversation is byte-for-byte the round-5 one (checked against simulated adapters), and your round-5 settings carry over.
 
@@ -12,6 +12,9 @@ Engine Swap plays one of 38 engines through the car speakers, driven live by the
 - **More:** Help, **🛟 Safe mode** (every extra off in one tap, turbo kit included), **Copy report for Claude**, settings export / import, *Advanced: connection log & adapter settings* (BD500 capture).
 
 **Test first in the car** (parked unless noted): the First drive card on the Drive screen → **▶ Test** sound, **Connect**, drive gently 5 minutes without touching the phone (anything odd: Safe mode), then the checklist and **Copy report**. Then try a **Turbo kit** on a V8 or the V10.
+
+**Round 83: iPhone users are pointed to Bluefy**
+- Apple allows no Web Bluetooth in any iPhone or iPad browser (Safari, and Chrome, which runs on Safari's engine there), so Connect OBD can't work in them. On iOS the hint under Connect now says so and links the free **Bluefy** browser, which has Web Bluetooth (BD500 and BLE ELM327; untested here). Classic ELM327 adapters can't work on an iPhone at all (no Web Serial). Other browsers keep the old "use Chrome on Android" hint. Version 83.
 
 **Round 82: 12 new BMW engines (38 in all)**
 - **Petrol:** M50 (E36 325i), M52 (E36 328i / E39 528i), M54 (E46 330i), N52 (E90 330i), N54 twin-turbo (E92 335i), N55 (F30 335i / M135i), B58 (G20 M340i / A90 Supra), B48 four (G20 330i), S55 twin-turbo (F80 M3 / F82 M4), S58 twin-turbo (G80 M3 / G82 M4). **Diesel:** N57 (F10 530d / 535d) and B57 (G30 530d / X5 40d), both with a sport exhaust as built (the M57 stays the straight-piped one). Every six fires 1-5-3-6-2-4, the B48 1-3-4-2; each card's info line gives firing order, idle, redline and induction.
